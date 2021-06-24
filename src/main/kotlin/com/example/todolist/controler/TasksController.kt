@@ -1,15 +1,19 @@
 package com.example.todolist.controler
 
-import com.example.todolist.entities.Task
+import com.example.todolist.controler.dto.TaskDtoUtils.convertDtoToTask
+import com.example.todolist.controler.dto.TaskDtoUtils.convertTaskToDto
+import com.example.todolist.controler.dto.TaskDtoUtils.convertTasksToDto
+import com.example.todolist.controler.dto.TaskDto
 import com.example.todolist.entities.TaskColor
 import com.example.todolist.service.TaskServiceImpl
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.time.LocalDateTime
 import java.util.*
 import org.springframework.http.HttpStatus
 import java.io.Serializable
 import java.time.LocalDate
+import javax.validation.Valid
 
 
 /**
@@ -22,34 +26,31 @@ class TasksController(private val taskService: TaskServiceImpl) {
     //todo обработка ошибок
 
     @GetMapping("/{id}")
-    fun get(@PathVariable("id") id: UUID): ResponseEntity<Task> {
-        return ResponseEntity.ok(taskService.findById(id))
+    fun get(@PathVariable("id") id: UUID): ResponseEntity<TaskDto> {
+        return ResponseEntity.ok(convertTaskToDto(taskService.findById(id)))
     }
 
     @GetMapping
-    fun getByDate(@RequestParam("date") date: String): ResponseEntity<List<Task>> {
-        val localDate = LocalDate.parse(date)
-        return ResponseEntity.ok(taskService.findAll(localDate))
+    fun getByDate(@RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate): ResponseEntity<List<TaskDto>> {
+        return ResponseEntity.ok(convertTasksToDto(taskService.findAll(date)))
     }
 
     @GetMapping("/all")
-    fun getAllTasks(): ResponseEntity<List<Task>> {
+    fun getAllTasks(): ResponseEntity<List<TaskDto>> {
         val tasks = taskService.findAll()
-        return ResponseEntity.ok(tasks)
+        return ResponseEntity.ok(convertTasksToDto(tasks))
     }
 
     @PutMapping
-    fun create(@RequestBody params: Map<String, Any>): ResponseEntity<Task> {
-        val text: String = params["text"].toString()
-        val estimationDate: LocalDateTime = LocalDateTime.parse(params["estimationDate"].toString())
-        val color = TaskColor.valueOf(params["color"].toString())
-
-        return ResponseEntity.ok(taskService.create(text, estimationDate, color))
+    fun create(@Valid @RequestBody taskDto: TaskDto): ResponseEntity<TaskDto> {
+        val newTask = taskService.create(taskDto.text, taskDto.estimationTime, TaskColor.valueOf(taskDto.color))
+        return ResponseEntity.ok(convertTaskToDto(newTask))
     }
 
     @PostMapping
-    fun save(@RequestBody task: Task): Task {
-        return taskService.save(task)
+    fun save(@Valid @RequestBody taskDto: TaskDto): TaskDto {
+        val task = taskService.save(convertDtoToTask(taskDto))
+        return convertTaskToDto(task)
     }
 
     @DeleteMapping("/{id}")

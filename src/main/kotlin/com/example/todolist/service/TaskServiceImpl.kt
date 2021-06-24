@@ -16,7 +16,7 @@ import java.util.*
 class TaskServiceImpl(private val repository: TaskRepository): TaskService {
 
     override fun create(text: String, estimationDate: LocalDateTime, color: TaskColor): Task {
-        val task = Task(text, LocalDateTime.now(), estimationDate, color)
+        val task = Task(text = text, estimationTime = estimationDate, color = color)
         return repository.save(task)
     }
 
