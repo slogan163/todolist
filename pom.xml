@@ -22,8 +22,8 @@
 
     <modules>
         <module>common-api</module>
-        <module>task_service</module>
-        <module>load_balancer</module>
+        <module>task-service</module>
+        <module>load-balancer</module>
         <module>security-service</module>
         <module>front</module>
     </modules>

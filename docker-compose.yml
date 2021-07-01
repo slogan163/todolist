@@ -1,0 +1,20 @@
+services:
+  postges:
+    image: postgres
+    ports:
+      - 6000:5432
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+
+  task-service:
+    build: ./task-service
+    depends_on:
+      - postges
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postges:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      - LOAD_BALANCER_HOST=http://load-balancer:8080/discovery/
