@@ -1,5 +1,6 @@
 package com.example.todolist.balancer
 
+import com.example.dto.ServiceDto
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.event.ApplicationReadyEvent
@@ -19,6 +20,9 @@ class StartHandler(val restTemplate: RestTemplate) {
     @Value("\${LOAD_BALANCER_HOST}")
     lateinit var loadBalancerHost: String
 
+    @Value("\${INSTANCE_ID}")
+    lateinit var instanceId: String
+
     @EventListener(ApplicationReadyEvent::class)
     fun tryToRegisterInLoadBalancer() {
         println("App started")
@@ -28,8 +32,11 @@ class StartHandler(val restTemplate: RestTemplate) {
 
         while (response != "ok") {
             try {
-                response = restTemplate.getForObject(uri, String::class.java)
-            } catch (e: Exception){
+                val uri = URI.create("http://task-service:8080/")
+                val dto = ServiceDto(uri, "task-service", instanceId)
+                response = restTemplate.postForEntity(URI.create(loadBalancerHost), dto, String::class.java)
+                    .toString()
+            } catch (e: Exception) {
                 logger.error(e.stackTraceToString())
                 println(e.printStackTrace())
             } finally {

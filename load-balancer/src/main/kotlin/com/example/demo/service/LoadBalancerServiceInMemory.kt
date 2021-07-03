@@ -9,8 +9,13 @@ class LoadBalancerServiceInMemory : LoadBalancerService {
     private val map = mutableMapOf<String, CircuitQueue>()
 
     override fun add(serviceName: String, instanceId: String) {
-        val queue = map.getOrDefault(serviceName, CircuitQueue())
-        queue.offer(instanceId)
+        if(map[serviceName] == null) {
+            val queue = CircuitQueue()
+            queue.offer(instanceId)
+            map[serviceName] = queue
+        } else {
+            map[serviceName]?.offer(instanceId)
+        }
     }
 
     override fun getNextInstance(serviceName: String): String {

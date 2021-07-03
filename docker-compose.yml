@@ -1,5 +1,6 @@
 services:
   postges:
+    container_name: postgres
     image: postgres
     ports:
       - 6000:5432
@@ -8,13 +9,42 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
 
+  load-balancer:
+    container_name: load-balancer
+    build:
+      context: load-balancer
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+
+  front:
+    container_name: front
+    build:
+      context: front
+      dockerfile: Dockerfile
+    depends_on:
+      - load-balancer
+    ports:
+      - 8082:8080
+    environment:
+      - LOAD_BALANCER_HOST=http://load-balancer:8080/discovery
+
   task-service:
-    build: ./task-service
+    container_name: task-service
+    build:
+      context: task-service
+      dockerfile: Dockerfile
+    image: task-service:latest
     depends_on:
       - postges
+      - load-balancer
+    ports:
+      - 8081:8080
+      - 8000:8000
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postges:5432/postgres
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
-      - LOAD_BALANCER_HOST=http://load-balancer:8080/discovery/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - LOAD_BALANCER_HOST=http://load-balancer:8080/discovery
+      - JAVA_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000
